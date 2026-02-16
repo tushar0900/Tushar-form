@@ -1,4 +1,10 @@
 {
   "buildCommand": "cd react && npm ci && npm run build",
-  "outputDirectory": "react/dist"
+  "outputDirectory": "react/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
