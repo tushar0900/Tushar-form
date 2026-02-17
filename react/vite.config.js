@@ -1,17 +1,18 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
+  base: command === "build" ? "/Tushar-form/" : "/",
   build: {
-    outDir: 'dist',
+    outDir: "dist",
     emptyOutDir: true,
-    minify: 'terser',
+    minify: "terser",
   },
   server: {
     port: 5173,
     strictPort: false,
     open: true,
   },
-})
+}));
