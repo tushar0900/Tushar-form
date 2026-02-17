@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+react/node_modules/
+
+# Build outputs
+dist/
+react/dist/
+
+# Environment files
+.env
+.env.*
+backend/.env
+react/.env
+react/.env.local
+react/.env.production
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
