@@ -1,6 +1,15 @@
 /* Employee Controller - API endpoints */
 import EmployeeService from "../services/EmployeeService.js";
 
+export const getNextEmployeeCode = async (_req, res) => {
+  try {
+    const employeeCode = await EmployeeService.getNextEmployeeCode();
+    res.status(200).json({ employeeCode });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const createEmployee = async (req, res) => {
   try {
     const employee = await EmployeeService.createEmployee(req.body);

@@ -3,6 +3,7 @@ import {
   createEmployee,
   getEmployeeById,
   getAllEmployees,
+  getNextEmployeeCode,
   updateEmployee,
   deleteEmployee,
   checkEmployeeCodeExists,
@@ -15,6 +16,7 @@ router.use(requireAuth);
 
 router.get("/", requireRole("admin", "super_admin"), getAllEmployees);
 router.post("/", requireRole("admin", "super_admin"), createEmployee);
+router.get("/next-code", requireRole("admin", "super_admin"), getNextEmployeeCode);
 router.get("/check/:code", requireRole("admin", "super_admin"), checkEmployeeCodeExists);
 router.get("/:id", requireRole("admin", "super_admin"), getEmployeeById);
 router.put("/:id", requireRole("admin", "super_admin"), updateEmployee);

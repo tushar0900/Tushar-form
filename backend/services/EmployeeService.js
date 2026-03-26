@@ -3,9 +3,13 @@ import EmployeeRepository from "../repositories/EmployeeRepository.js";
 import { generateEmployeeCode } from "../utils/generateCode.js";
 
 class EmployeeService {
+  async getNextEmployeeCode() {
+    return await generateEmployeeCode();
+  }
+
   // Create new employee with validation
   async createEmployee(employeeData) {
-    const { dob, joiningDate } = employeeData;
+    const { dob, joiningDate, employeeCode: requestedEmployeeCode } = employeeData;
 
     // Age validation (18+)
     const dobDate = new Date(dob);
@@ -16,8 +20,17 @@ class EmployeeService {
       throw new Error("Employee must be at least 18 years old at joining");
     }
 
-    // Generate unique employee code
-    const employeeCode = await generateEmployeeCode();
+    let employeeCode = Number(requestedEmployeeCode);
+
+    if (!Number.isInteger(employeeCode) || employeeCode < 1000 || employeeCode > 9999) {
+      employeeCode = await generateEmployeeCode();
+    } else {
+      const exists = await EmployeeRepository.existsByCode(employeeCode);
+
+      if (exists) {
+        employeeCode = await generateEmployeeCode();
+      }
+    }
 
     return await EmployeeRepository.create({
       ...employeeData,

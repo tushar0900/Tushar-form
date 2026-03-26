@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "./lib/api";
 
@@ -31,6 +31,25 @@ function EmployeeForm() {
   const [successMessage, setSuccessMessage] = useState("");
   const [createdEmployee, setCreatedEmployee] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [employeeCodePreview, setEmployeeCodePreview] = useState("");
+  const [loadingPreview, setLoadingPreview] = useState(true);
+
+  const loadEmployeeCodePreview = async () => {
+    setLoadingPreview(true);
+
+    try {
+      const response = await api.get("/employees/next-code");
+      setEmployeeCodePreview(String(response.data.employeeCode || ""));
+    } catch {
+      setEmployeeCodePreview("");
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadEmployeeCodePreview();
+  }, []);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -54,10 +73,14 @@ function EmployeeForm() {
     }
 
     try {
-      const response = await api.post("/employees", formState);
+      const response = await api.post("/employees", {
+        ...formState,
+        employeeCode: employeeCodePreview || undefined,
+      });
       setCreatedEmployee(response.data);
       setFormState(initialFormState);
       setSuccessMessage("Employee created successfully.");
+      void loadEmployeeCodePreview();
     } catch (requestError) {
       setError(
         requestError.response?.data?.message || "Failed to save employee"
@@ -96,6 +119,18 @@ function EmployeeForm() {
           </div>
 
           <form className="form-grid" onSubmit={handleSubmit}>
+            <div className="field">
+              <label htmlFor="employeeCode">Employee Code</label>
+              <input
+                id="employeeCode"
+                name="employeeCode"
+                type="text"
+                value={employeeCodePreview}
+                placeholder={loadingPreview ? "Generating..." : "Generated on save"}
+                readOnly
+              />
+            </div>
+
             <div className="field">
               <label htmlFor="employeeName">Employee Name</label>
               <input
@@ -198,6 +233,7 @@ function EmployeeForm() {
           )}
 
           <ul className="bullet-list">
+            <li>Employee code is generated automatically.</li>
             <li>Joining date must be at least 18 years after date of birth.</li>
             <li>Email and phone values must be unique.</li>
             <li>Delete access is reserved for super admins.</li>
