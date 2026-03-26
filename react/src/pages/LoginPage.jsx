@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import { getHomePathForRole } from "../lib/homePath";
 
 function LoginPage() {
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [credentials, setCredentials] = useState({
@@ -14,7 +15,7 @@ function LoginPage() {
   const [error, setError] = useState("");
 
   if (isAuthenticated) {
-    return <Navigate to="/employees" replace />;
+    return <Navigate to={getHomePathForRole(user?.role)} replace />;
   }
 
   const handleChange = (event) => {
@@ -32,9 +33,7 @@ function LoginPage() {
 
     try {
       const user = await login(credentials.email, credentials.password);
-      const nextPath =
-        location.state?.from?.pathname ||
-        (user.role === "super_admin" ? "/users" : "/employees");
+      const nextPath = location.state?.from?.pathname || getHomePathForRole(user.role);
 
       navigate(nextPath, { replace: true });
     } catch (requestError) {
@@ -51,10 +50,10 @@ function LoginPage() {
       <div className="auth-card">
         <div className="auth-intro">
           <span className="auth-kicker">Secure Access</span>
-          <h1>HRMS Admin Login</h1>
+          <h1>HRMS Login</h1>
           <p>
-            Use an admin or super admin account to manage employees, salaries,
-            and access permissions.
+            Admins manage employees and salaries. Employee accounts can only view
+            their own salary record.
           </p>
         </div>
 

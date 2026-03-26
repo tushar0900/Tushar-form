@@ -8,6 +8,7 @@ const initialUserForm = {
   email: "",
   password: "",
   role: "admin",
+  employeeCode: "",
   status: "active",
 };
 
@@ -17,6 +18,7 @@ const buildDrafts = (users) =>
       user.id,
       {
         role: user.role,
+        employeeCode: user.employeeCode ? String(user.employeeCode) : "",
         status: user.status,
         password: "",
       },
@@ -28,9 +30,18 @@ async function fetchUsers() {
   return response.data.data || [];
 }
 
+async function fetchEmployees() {
+  const response = await api.get("/employees", {
+    params: { dropdown: true },
+  });
+
+  return response.data || [];
+}
+
 function UserManagement() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [formState, setFormState] = useState(initialUserForm);
   const [loading, setLoading] = useState(true);
@@ -38,8 +49,12 @@ function UserManagement() {
   const [feedback, setFeedback] = useState(null);
 
   const loadUsers = async (successMessage = "") => {
-    const nextUsers = await fetchUsers();
+    const [nextUsers, nextEmployees] = await Promise.all([
+      fetchUsers(),
+      fetchEmployees(),
+    ]);
     setUsers(nextUsers);
+    setEmployees(nextEmployees);
     setDrafts(buildDrafts(nextUsers));
 
     if (successMessage) {
@@ -52,21 +67,14 @@ function UserManagement() {
 
     const run = async () => {
       try {
-        const nextUsers = await fetchUsers();
-
-        if (!isMounted) {
-          return;
-        }
-
-        setUsers(nextUsers);
-        setDrafts(buildDrafts(nextUsers));
+        await loadUsers();
         setFeedback(null);
       } catch (error) {
         if (isMounted) {
           setFeedback({
             type: "error",
             message:
-              error.response?.data?.message || "Failed to load users",
+              error.response?.data?.message || "Failed to load user management data",
           });
         }
       } finally {
@@ -85,9 +93,25 @@ function UserManagement() {
 
   const handleCreateChange = (event) => {
     const { name, value } = event.target;
+
+    if (name === "employeeCode") {
+      const selectedEmployee = employees.find(
+        (employee) => String(employee.employeeCode) === value
+      );
+
+      setFormState((currentState) => ({
+        ...currentState,
+        employeeCode: value,
+        name: selectedEmployee?.employeeName || currentState.name,
+        email: selectedEmployee?.employeeEmail || currentState.email,
+      }));
+      return;
+    }
+
     setFormState((currentState) => ({
       ...currentState,
       [name]: value,
+      ...(name === "role" && value !== "employee" ? { employeeCode: "" } : {}),
     }));
   };
 
@@ -95,6 +119,15 @@ function UserManagement() {
     event.preventDefault();
     setSubmitting(true);
     setFeedback(null);
+
+    if (formState.role === "employee" && !formState.employeeCode) {
+      setFeedback({
+        type: "error",
+        message: "Select an employee before creating an employee login",
+      });
+      setSubmitting(false);
+      return;
+    }
 
     try {
       await api.post("/users", formState);
@@ -116,6 +149,7 @@ function UserManagement() {
       [userId]: {
         ...currentState[userId],
         [field]: value,
+        ...(field === "role" && value !== "employee" ? { employeeCode: "" } : {}),
       },
     }));
   };
@@ -128,10 +162,29 @@ function UserManagement() {
       return;
     }
 
+    if (draft.role === "employee" && !draft.employeeCode) {
+      setFeedback({
+        type: "error",
+        message: "Employee users must be linked to an employee record",
+      });
+      return;
+    }
+
     const payload = {};
+    const currentEmployeeCode = targetUser.employeeCode
+      ? String(targetUser.employeeCode)
+      : "";
 
     if (draft.role !== targetUser.role) {
       payload.role = draft.role;
+    }
+
+    if (draft.role === "employee" && draft.employeeCode !== currentEmployeeCode) {
+      payload.employeeCode = draft.employeeCode;
+    }
+
+    if (draft.role !== "employee" && targetUser.employeeCode) {
+      payload.employeeCode = null;
     }
 
     if (draft.status !== targetUser.status) {
@@ -211,7 +264,7 @@ function UserManagement() {
         <div>
           <span className="eyebrow">Super Admin</span>
           <h1>User Management</h1>
-          <p>Create admin accounts, promote trusted users, and control access.</p>
+          <p>Create staff accounts, promote trusted users, and control access.</p>
         </div>
       </div>
 
@@ -230,7 +283,7 @@ function UserManagement() {
           <div className="panel-heading">
             <div>
               <h2>Create User</h2>
-              <p>Add an admin or another super admin account.</p>
+              <p>Add an admin, super admin, or employee salary-view account.</p>
             </div>
           </div>
 
@@ -281,8 +334,32 @@ function UserManagement() {
               >
                 <option value="admin">Admin</option>
                 <option value="super_admin">Super Admin</option>
+                <option value="employee">Employee</option>
               </select>
             </div>
+
+            {formState.role === "employee" && (
+              <div className="field">
+                <label htmlFor="employeeCode">Linked Employee</label>
+                <select
+                  id="employeeCode"
+                  name="employeeCode"
+                  value={formState.employeeCode}
+                  onChange={handleCreateChange}
+                  required
+                >
+                  <option value="">Select employee</option>
+                  {employees.map((employee) => (
+                    <option
+                      key={employee.employeeCode}
+                      value={employee.employeeCode}
+                    >
+                      {employee.employeeName} ({employee.employeeCode})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="field">
               <label htmlFor="status">Status</label>
@@ -332,6 +409,7 @@ function UserManagement() {
 
           <ul className="bullet-list">
             <li>Admins can manage employees and salaries.</li>
+            <li>Employees can only sign in and view their own salary.</li>
             <li>Only super admins can create, disable, or promote users.</li>
             <li>At least one active super admin must always remain.</li>
           </ul>
@@ -342,7 +420,7 @@ function UserManagement() {
         <div className="panel-heading">
           <div>
             <h2>Existing Users</h2>
-            <p>Update role, status, or reset a password inline.</p>
+            <p>Update role, linked employee, status, or reset a password inline.</p>
           </div>
         </div>
 
@@ -353,6 +431,7 @@ function UserManagement() {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
+                <th>Linked Employee</th>
                 <th>Status</th>
                 <th>Last Login</th>
                 <th>Reset Password</th>
@@ -377,7 +456,30 @@ function UserManagement() {
                     >
                       <option value="admin">Admin</option>
                       <option value="super_admin">Super Admin</option>
+                      <option value="employee">Employee</option>
                     </select>
+                  </td>
+                  <td data-label="Linked Employee">
+                    {(drafts[user.id]?.role || user.role) === "employee" ? (
+                      <select
+                        value={drafts[user.id]?.employeeCode || ""}
+                        onChange={(event) =>
+                          handleDraftChange(user.id, "employeeCode", event.target.value)
+                        }
+                      >
+                        <option value="">Select employee</option>
+                        {employees.map((employee) => (
+                          <option
+                            key={employee.employeeCode}
+                            value={employee.employeeCode}
+                          >
+                            {employee.employeeName} ({employee.employeeCode})
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span>{user.employeeCode || "-"}</span>
+                    )}
                   </td>
                   <td data-label="Status">
                     <select

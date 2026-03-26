@@ -6,12 +6,15 @@ function AppLayout() {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const navigationItems = [
-    { to: "/employees", label: "Employees" },
-    { to: "/employees/new", label: "Add Employee" },
-    { to: "/salary", label: "Salary Master" },
-    { to: "/salary-list", label: "Salary List" },
-  ];
+  const navigationItems =
+    user?.role === "employee"
+      ? [{ to: "/my-salary", label: "My Salary" }]
+      : [
+          { to: "/employees", label: "Employees" },
+          { to: "/employees/new", label: "Add Employee" },
+          { to: "/salary", label: "Salary Master" },
+          { to: "/salary-list", label: "Salary List" },
+        ];
 
   if (user?.role === "super_admin") {
     navigationItems.push({ to: "/users", label: "User Management" });
@@ -28,7 +31,11 @@ function AppLayout() {
         <div className="brand-block">
           <span className="brand-kicker">HRMS</span>
           <h1>Control Center</h1>
-          <p>Employees, salaries, and role-based access in one place.</p>
+          <p>
+            {user?.role === "employee"
+              ? "View your salary details in a read-only workspace."
+              : "Employees, salaries, and role-based access in one place."}
+          </p>
         </div>
 
         <nav className="sidebar-nav">
@@ -50,6 +57,7 @@ function AppLayout() {
           <span className="role-badge">{user?.role?.replace("_", " ")}</span>
           <strong>{user?.name}</strong>
           <span>{user?.email}</span>
+          {user?.employeeCode ? <span>Employee Code: {user.employeeCode}</span> : null}
         </div>
       </aside>
 

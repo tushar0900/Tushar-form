@@ -27,8 +27,12 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["super_admin", "admin"],
+      enum: ["super_admin", "admin", "employee"],
       default: "admin",
+    },
+    employeeCode: {
+      type: Number,
+      default: null,
     },
     status: {
       type: String,
@@ -41,6 +45,14 @@ const userSchema = new mongoose.Schema(
     },
   },
   { timestamps: true }
+);
+
+userSchema.index(
+  { employeeCode: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { employeeCode: { $type: "number" } },
+  }
 );
 
 export default mongoose.model("User", userSchema);

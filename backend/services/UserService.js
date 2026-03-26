@@ -1,8 +1,9 @@
 import bcrypt from "bcryptjs";
 import UserRepository from "../repositories/UserRepository.js";
+import EmployeeRepository from "../repositories/EmployeeRepository.js";
 import { sanitizeUser } from "./AuthService.js";
 
-const VALID_ROLES = new Set(["admin", "super_admin"]);
+const VALID_ROLES = new Set(["admin", "super_admin", "employee"]);
 const VALID_STATUSES = new Set(["active", "inactive"]);
 
 const buildUsernameBase = (value = "") => {
@@ -15,6 +16,53 @@ const buildUsernameBase = (value = "") => {
 };
 
 class UserService {
+  normalizeEmployeeCode(value) {
+    if (value === undefined || value === null || value === "") {
+      return null;
+    }
+
+    const employeeCode = Number(value);
+    return Number.isInteger(employeeCode) ? employeeCode : Number.NaN;
+  }
+
+  async resolveEmployeeAccount(employeeCode, userIdToIgnore = null) {
+    const normalizedEmployeeCode = this.normalizeEmployeeCode(employeeCode);
+
+    if (!Number.isInteger(normalizedEmployeeCode)) {
+      throw new Error("Employee users must be linked to a valid employee code");
+    }
+
+    const employee = await EmployeeRepository.findByEmployeeCode(normalizedEmployeeCode);
+
+    if (!employee) {
+      throw new Error("Selected employee does not exist");
+    }
+
+    const linkedUser = await UserRepository.findByEmployeeCode(normalizedEmployeeCode);
+
+    if (linkedUser && String(linkedUser._id) !== String(userIdToIgnore)) {
+      throw new Error("This employee already has a login account");
+    }
+
+    return {
+      employeeCode: normalizedEmployeeCode,
+      employee,
+    };
+  }
+
+  async validateEmployeeLink(role, employeeCode, userIdToIgnore = null) {
+    if (role !== "employee") {
+      return null;
+    }
+
+    const employeeAccount = await this.resolveEmployeeAccount(
+      employeeCode,
+      userIdToIgnore
+    );
+
+    return employeeAccount.employeeCode;
+  }
+
   async generateUniqueUsername(seedValue) {
     const base = buildUsernameBase(seedValue);
     let candidate = base;
@@ -34,7 +82,14 @@ class UserService {
   }
 
   async createUser(userData) {
-    const { name, email, password, role = "admin", status = "active" } = userData;
+    const {
+      name,
+      email,
+      password,
+      role = "admin",
+      status = "active",
+      employeeCode,
+    } = userData;
 
     if (!name || !email || !password) {
       throw new Error("Name, email, and password are required");
@@ -48,19 +103,34 @@ class UserService {
       throw new Error("Invalid user status");
     }
 
-    const existingUser = await UserRepository.findByEmail(email);
+    const employeeAccount =
+      role === "employee"
+        ? await this.resolveEmployeeAccount(employeeCode)
+        : null;
+    const normalizedEmployeeCode = employeeAccount?.employeeCode ?? null;
+    const finalName =
+      role === "employee"
+        ? employeeAccount.employee.employeeName.trim()
+        : name.trim();
+    const finalEmail =
+      role === "employee"
+        ? employeeAccount.employee.employeeEmail.toLowerCase().trim()
+        : email.toLowerCase().trim();
+
+    const existingUser = await UserRepository.findByEmail(finalEmail);
     if (existingUser) {
       throw new Error("A user with this email already exists");
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const username = await this.generateUniqueUsername(email);
+    const username = await this.generateUniqueUsername(finalEmail);
     const user = await UserRepository.create({
       username,
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
+      name: finalName,
+      email: finalEmail,
       passwordHash,
       role,
+      employeeCode: normalizedEmployeeCode,
       status,
     });
 
@@ -84,6 +154,15 @@ class UserService {
       throw new Error("Invalid user status");
     }
 
+    const nextEmployeeCode = Object.prototype.hasOwnProperty.call(updates, "employeeCode")
+      ? updates.employeeCode
+      : user.employeeCode;
+    const employeeAccount =
+      nextRole === "employee"
+        ? await this.resolveEmployeeAccount(nextEmployeeCode, userId)
+        : null;
+    const normalizedEmployeeCode = employeeAccount?.employeeCode ?? null;
+
     if (String(user._id) === actorId && updates.status === "inactive") {
       throw new Error("You cannot deactivate your own account");
     }
@@ -101,8 +180,15 @@ class UserService {
       }
     }
 
-    if (updates.email && updates.email.toLowerCase().trim() !== user.email) {
-      const existingUser = await UserRepository.findByEmail(updates.email);
+    const finalEmail =
+      nextRole === "employee"
+        ? employeeAccount.employee.employeeEmail.toLowerCase().trim()
+        : updates.email
+          ? updates.email.toLowerCase().trim()
+          : user.email;
+
+    if (finalEmail !== user.email) {
+      const existingUser = await UserRepository.findByEmail(finalEmail);
       if (existingUser) {
         throw new Error("A user with this email already exists");
       }
@@ -120,6 +206,17 @@ class UserService {
 
     if (updates.role) {
       updatePayload.role = updates.role;
+    }
+
+    if (nextRole !== "employee" && user.employeeCode !== null) {
+      updatePayload.employeeCode = null;
+    }
+
+    if (nextRole === "employee") {
+      updatePayload.employeeCode = normalizedEmployeeCode;
+      updatePayload.name = employeeAccount.employee.employeeName.trim();
+      updatePayload.email =
+        employeeAccount.employee.employeeEmail.toLowerCase().trim();
     }
 
     if (updates.status) {

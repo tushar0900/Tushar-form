@@ -48,7 +48,7 @@ class EmployeeRepository {
   // Find all employees (for dropdown)
   async findAllSimple() {
     try {
-      return await Employee.find({}, "employeeName employeeCode");
+      return await Employee.find({}, "employeeName employeeCode employeeEmail");
     } catch (error) {
       throw new Error(`Failed to fetch employees: ${error.message}`);
     }

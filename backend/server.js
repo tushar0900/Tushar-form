@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import salaryRoutes from "./routes/salaryRoutes.js";
 import employeeRoutes from "./routes/employeeRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import User from "./models/User.js";
 import AuthService from "./services/AuthService.js";
 
 dotenv.config();
@@ -38,6 +39,8 @@ const startServer = async () => {
   try {
     await mongoose.connect(MONGO_URI);
     console.log("MongoDB connected");
+    await User.syncIndexes();
+    console.log("User indexes synced");
     await AuthService.bootstrapSuperAdmin();
 
     app.listen(PORT, () => {

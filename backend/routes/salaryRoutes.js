@@ -4,6 +4,7 @@ import {
   getAllSalaries,
   getSalaryById,
   getSalaryByEmployeeCode,
+  getMySalary,
   updateSalary,
   deleteSalary
 } from "../controllers/salarycontroller.js";
@@ -15,6 +16,7 @@ router.use(requireAuth);
 
 router.post("/", requireRole("admin", "super_admin"), createSalary);
 router.get("/", requireRole("admin", "super_admin"), getAllSalaries);
+router.get("/my-salary", requireRole("employee"), getMySalary);
 router.get("/employee/:employeeCode", requireRole("admin", "super_admin"), getSalaryByEmployeeCode);
 router.get("/:id", requireRole("admin", "super_admin"), getSalaryById);
 router.put("/:id", requireRole("admin", "super_admin"), updateSalary);

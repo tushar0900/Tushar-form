@@ -46,6 +46,20 @@ export const getSalaryByEmployeeCode = async (req, res) => {
   }
 };
 
+export const getMySalary = async (req, res) => {
+  try {
+    if (!req.user?.employeeCode) {
+      return res.status(403).json({ message: "No employee record is linked to this account" });
+    }
+
+    const salary = await SalaryService.getSalaryByEmployeeCode(req.user.employeeCode);
+    res.status(200).json(salary);
+  } catch (error) {
+    const statusCode = error.message === "Salary record not found" ? 404 : 400;
+    res.status(statusCode).json({ message: error.message });
+  }
+};
+
 export const updateSalary = async (req, res) => {
   try {
     const salary = await SalaryService.updateSalary(req.params.id, req.body);

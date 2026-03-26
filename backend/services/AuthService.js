@@ -23,6 +23,7 @@ export const sanitizeUser = (user) => ({
   name: user.name,
   email: user.email,
   role: user.role,
+  employeeCode: user.employeeCode ?? null,
   status: user.status,
   lastLoginAt: user.lastLoginAt,
   createdAt: user.createdAt,

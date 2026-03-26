@@ -18,6 +18,10 @@ class UserRepository {
     return User.findOne({ username: username.toLowerCase().trim() });
   }
 
+  async findByEmployeeCode(employeeCode) {
+    return User.findOne({ employeeCode });
+  }
+
   async findAll() {
     return User.find().sort({ createdAt: -1 });
   }
