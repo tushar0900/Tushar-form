@@ -16,7 +16,12 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/employeeDB";
+const DEFAULT_MONGO_URI = "mongodb://127.0.0.1:27017/employeeDB";
+const MONGO_URI =
+  process.env.MONGO_URI &&
+  !process.env.MONGO_URI.includes("your_mongodb_connection_string")
+    ? process.env.MONGO_URI
+    : DEFAULT_MONGO_URI;
 
 // Routes
 app.use("/auth", authRoutes);
