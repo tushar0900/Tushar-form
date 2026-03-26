@@ -5,7 +5,29 @@ import { sanitizeUser } from "./AuthService.js";
 const VALID_ROLES = new Set(["admin", "super_admin"]);
 const VALID_STATUSES = new Set(["active", "inactive"]);
 
+const buildUsernameBase = (value = "") => {
+  const base = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 18);
+
+  return base || "user";
+};
+
 class UserService {
+  async generateUniqueUsername(seedValue) {
+    const base = buildUsernameBase(seedValue);
+    let candidate = base;
+    let suffix = 1;
+
+    while (await UserRepository.findByUsername(candidate)) {
+      candidate = `${base}${suffix}`;
+      suffix += 1;
+    }
+
+    return candidate;
+  }
+
   async listUsers() {
     const users = await UserRepository.findAll();
     return users.map(sanitizeUser);
@@ -32,7 +54,9 @@ class UserService {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const username = await this.generateUniqueUsername(email);
     const user = await UserRepository.create({
+      username,
       name: name.trim(),
       email: email.toLowerCase().trim(),
       passwordHash,

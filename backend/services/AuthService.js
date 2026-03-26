@@ -9,6 +9,15 @@ const DEFAULT_SUPER_ADMIN_PASSWORD =
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-secret-change-me";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
+const buildUsernameBase = (value = "") => {
+  const base = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 18);
+
+  return base || "user";
+};
+
 export const sanitizeUser = (user) => ({
   id: user._id.toString(),
   name: user.name,
@@ -21,6 +30,28 @@ export const sanitizeUser = (user) => ({
 });
 
 class AuthService {
+  async generateUniqueUsername(seedValue) {
+    const base = buildUsernameBase(seedValue);
+    let candidate = base;
+    let suffix = 1;
+
+    while (await UserRepository.findByUsername(candidate)) {
+      candidate = `${base}${suffix}`;
+      suffix += 1;
+    }
+
+    return candidate;
+  }
+
+  async backfillMissingUsernames() {
+    const users = await UserRepository.findUsersWithoutUsername();
+
+    for (const user of users) {
+      user.username = await this.generateUniqueUsername(user.email || user.name);
+      await user.save({ validateBeforeSave: false });
+    }
+  }
+
   generateToken(user) {
     return jwt.sign(
       {
@@ -74,6 +105,8 @@ class AuthService {
   }
 
   async bootstrapSuperAdmin() {
+    await this.backfillMissingUsernames();
+
     const activeSuperAdminCount = await UserRepository.countActiveByRole(
       "super_admin"
     );
@@ -83,8 +116,10 @@ class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(DEFAULT_SUPER_ADMIN_PASSWORD, 10);
+    const username = await this.generateUniqueUsername(DEFAULT_SUPER_ADMIN_EMAIL);
 
     await UserRepository.create({
+      username,
       name: "System Super Admin",
       email: DEFAULT_SUPER_ADMIN_EMAIL,
       passwordHash,

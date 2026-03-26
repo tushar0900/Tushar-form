@@ -14,8 +14,22 @@ class UserRepository {
     return User.findOne({ email: email.toLowerCase().trim() });
   }
 
+  async findByUsername(username) {
+    return User.findOne({ username: username.toLowerCase().trim() });
+  }
+
   async findAll() {
     return User.find().sort({ createdAt: -1 });
+  }
+
+  async findUsersWithoutUsername() {
+    return User.find({
+      $or: [
+        { username: { $exists: false } },
+        { username: null },
+        { username: "" },
+      ],
+    });
   }
 
   async updateById(id, updateData) {
