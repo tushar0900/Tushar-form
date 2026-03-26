@@ -45,17 +45,11 @@ export const getAllEmployees = async (req, res) => {
 
 export const updateEmployee = async (req, res) => {
   try {
-    // Try by ID first
-    let employee = await EmployeeService.updateEmployee(req.params.id, req.body);
-    
-    if (!employee) {
-      // Try by employee code
-      employee = await EmployeeService.updateEmployee(req.params.id, req.body);
-    }
-
+    const employee = await EmployeeService.updateEmployee(req.params.id, req.body);
     res.status(200).json(employee);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    const statusCode = error.message === "Employee not found" ? 404 : 400;
+    res.status(statusCode).json({ message: error.message });
   }
 };
 

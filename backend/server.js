@@ -2,8 +2,11 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import authRoutes from "./routes/authRoutes.js";
 import salaryRoutes from "./routes/salaryRoutes.js";
 import employeeRoutes from "./routes/employeeRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import AuthService from "./services/AuthService.js";
 
 dotenv.config();
 
@@ -16,6 +19,8 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/employeeDB";
 
 // Routes
+app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
 app.use("/employees", employeeRoutes);
 app.use("/salary-master", salaryRoutes);
 
@@ -28,6 +33,7 @@ const startServer = async () => {
   try {
     await mongoose.connect(MONGO_URI);
     console.log("MongoDB connected");
+    await AuthService.bootstrapSuperAdmin();
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

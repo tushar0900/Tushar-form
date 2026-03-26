@@ -1,243 +1,289 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "./lib/api";
+import { formatCurrency } from "./lib/formatters";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? "https://tushar-form.onrender.com" : "http://localhost:5000");
+const initialFormState = {
+  employeeCode: "",
+  basic: "",
+  hra: "",
+  conveyance: "",
+  otherAllowance: "",
+};
 
-function SalaryMaster() {
-  const [employeeCode, setEmployeeCode] = useState("");
-  const [basic, setBasic] = useState(0);
-  const [hra, setHra] = useState(0);
-  const [conveyance, setConveyance] = useState(0);
-  const [otherAllowance, setOtherAllowance] = useState(0);
-  const [error, setError] = useState("");
-  const [apiConfigError, setApiConfigError] = useState("");
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!API_BASE_URL || API_BASE_URL === "undefined") {
-      setApiConfigError(
-        "⚠️ Backend API URL is not configured. Please set VITE_API_BASE_URL environment variable."
-      );
-    }
-  }, []);
-
-  const gross =
-    Number(basic) +
-    Number(hra) +
-    Number(conveyance) +
-    Number(otherAllowance);
-
+const calculatePreview = (formState) => {
+  const basic = Number(formState.basic || 0);
+  const hra = Number(formState.hra || 0);
+  const conveyance = Number(formState.conveyance || 0);
+  const otherAllowance = Number(formState.otherAllowance || 0);
+  const gross = basic + hra + conveyance + otherAllowance;
   const employeePF = basic * 0.12;
   const employerPF = basic * 0.12;
   const eps = basic * 0.0833;
-  const employerEPF = basic * 0.0367;
-
-  const isESICApplicable = gross <= 21000;
-  const employeeESIC = isESICApplicable ? gross * 0.0075 : 0;
-  const employerESIC = isESICApplicable ? gross * 0.0325 : 0;
-
-  const totalDeduction = employeePF + employeeESIC;
-  const netSalary = gross - totalDeduction;
+  const employerEPF = employerPF - eps;
+  const employeeESIC = gross <= 21000 ? gross * 0.0075 : 0;
+  const employerESIC = gross <= 21000 ? gross * 0.0325 : 0;
+  const netSalary = gross - employeePF - employeeESIC;
   const ctc = gross + employerPF + employerESIC;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  return {
+    gross,
+    employeePF,
+    employerPF,
+    eps,
+    employerEPF,
+    employeeESIC,
+    employerESIC,
+    netSalary,
+    ctc,
+  };
+};
 
-    if (!API_BASE_URL || API_BASE_URL === "undefined") {
-      setError("Cannot submit: Backend API URL is not configured.");
-      return;
-    }
+async function fetchEmployeeOptions() {
+  const response = await api.get("/employees", {
+    params: { dropdown: true },
+  });
 
-    if (!employeeCode) {
-      setError("Employee Code is required");
-      return;
-    }
+  return response.data || [];
+}
 
-    const salaryData = {
-      employeeCode: parseInt(employeeCode),
-      basic: Number(basic),
-      hra: Number(hra),
-      conveyance: Number(conveyance),
-      otherAllowance: Number(otherAllowance),
-      grossSalary: gross,
-      employeePF,
-      employerPF,
-      eps,
-      epf: employerEPF,
-      employeeESIC,
-      employerESIC,
-      netSalary,
-      ctc,
+function SalaryMaster() {
+  const navigate = useNavigate();
+  const [formState, setFormState] = useState(initialFormState);
+  const [employees, setEmployees] = useState([]);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const run = async () => {
+      try {
+        const employeeOptions = await fetchEmployeeOptions();
+
+        if (isMounted) {
+          setEmployees(employeeOptions);
+        }
+      } catch (requestError) {
+        if (isMounted) {
+          setError(
+            requestError.response?.data?.message || "Failed to load employees"
+          );
+        }
+      }
     };
 
+    void run();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const preview = calculatePreview(formState);
+  const selectedEmployee = employees.find(
+    (employee) => String(employee.employeeCode) === formState.employeeCode
+  );
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormState((currentState) => ({
+      ...currentState,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
+    setSuccessMessage("");
+    setSubmitting(true);
+
+    if (!formState.employeeCode) {
+      setError("Select an employee before saving salary details.");
+      setSubmitting(false);
+      return;
+    }
+
     try {
-      const res = await fetch(`${API_BASE_URL}/salary-master`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(salaryData),
+      await api.post("/salary-master", {
+        employeeCode: Number(formState.employeeCode),
+        basic: Number(formState.basic || 0),
+        hra: Number(formState.hra || 0),
+        conveyance: Number(formState.conveyance || 0),
+        otherAllowance: Number(formState.otherAllowance || 0),
       });
 
-      const result = await res.json();
-
-      if (!res.ok) throw new Error(result.message || "Failed to save salary master");
-
-      alert("Salary Master Saved Successfully ✅");
-      e.target.reset();
-      setEmployeeCode("");
-    } catch (err) {
-      setError(err.message);
+      setSuccessMessage("Salary master saved successfully.");
+      setFormState(initialFormState);
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.message || "Failed to save salary master"
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Salary Master</h1>
-      <button
-        onClick={() => navigate("/salary-list")}
-        style={{
-          backgroundColor: "#2196F3",
-          color: "white",
-          padding: "8px 16px",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-          width: "auto",
-          marginBottom: "20px",
-        }}
-      >
-        View Salary List
-      </button>
+    <section className="page-stack">
+      <div className="page-header">
+        <div>
+          <span className="eyebrow">Compensation Setup</span>
+          <h1>Salary Master</h1>
+          <p>Select an existing employee and store validated salary components.</p>
+        </div>
+        <div className="button-row">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => navigate("/salary-list")}
+          >
+            View Salary List
+          </button>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit} style={{ maxWidth: "600px" }}>
-        {apiConfigError && (
-          <div style={{
-            backgroundColor: "#f8d7da",
-            border: "1px solid #f5c6cb",
-            color: "#721c24",
-            padding: "12px",
-            marginBottom: "15px",
-            borderRadius: "4px"
-          }}>
-            {apiConfigError}
-          </div>
-        )}
-
-        {error && <p style={{ color: "red", marginBottom: "15px" }}>{error}</p>}
-
-        <fieldset style={{ marginBottom: "20px", padding: "15px", borderRadius: "5px", border: "1px solid #ddd" }}>
-          <legend style={{ fontWeight: "bold", padding: "0 10px" }}>Employee Details</legend>
-
-          <label style={{ display: "block", marginBottom: "10px" }}>
-            <strong>Employee Code:</strong> <span style={{ color: "#999", fontSize: "12px" }}>e.g., 3581</span>
-          </label>
-          <input
-            type="number"
-            value={employeeCode}
-            placeholder="Enter employee code (e.g., 3581)"
-            required
-            onChange={(e) => setEmployeeCode(e.target.value)}
-            style={{ width: "100%", padding: "8px", marginBottom: "15px", borderRadius: "4px", border: "1px solid #ddd" }}
-          />
-        </fieldset>
-
-        <fieldset style={{ marginBottom: "20px", padding: "15px", borderRadius: "5px", border: "1px solid #ddd" }}>
-          <legend style={{ fontWeight: "bold", padding: "0 10px" }}>Earnings</legend>
-
-          <label style={{ display: "block", marginBottom: "10px" }}>
-            <strong>Basic:</strong> <span style={{ color: "#999", fontSize: "12px" }}>e.g., 50000</span>
-          </label>
-          <input
-            type="number"
-            value={basic}
-            placeholder="Enter basic salary (e.g., 50000)"
-            onChange={(e) => setBasic(+e.target.value)}
-            style={{ width: "100%", padding: "8px", marginBottom: "15px", borderRadius: "4px", border: "1px solid #ddd" }}
-          />
-
-          <label style={{ display: "block", marginBottom: "10px" }}>
-            <strong>HRA:</strong> <span style={{ color: "#999", fontSize: "12px" }}>e.g., 10000 (20% of basic)</span>
-          </label>
-          <input
-            type="number"
-            value={hra}
-            placeholder="Enter HRA (e.g., 10000)"
-            onChange={(e) => setHra(+e.target.value)}
-            style={{ width: "100%", padding: "8px", marginBottom: "15px", borderRadius: "4px", border: "1px solid #ddd" }}
-          />
-
-          <label style={{ display: "block", marginBottom: "10px" }}>
-            <strong>Conveyance:</strong> <span style={{ color: "#999", fontSize: "12px" }}>e.g., 2000</span>
-          </label>
-          <input
-            type="number"
-            value={conveyance}
-            placeholder="Enter conveyance allowance (e.g., 2000)"
-            onChange={(e) => setConveyance(+e.target.value)}
-            style={{ width: "100%", padding: "8px", marginBottom: "15px", borderRadius: "4px", border: "1px solid #ddd" }}
-          />
-
-          <label style={{ display: "block", marginBottom: "10px" }}>
-            <strong>Other Allowance:</strong> <span style={{ color: "#999", fontSize: "12px" }}>e.g., 1000</span>
-          </label>
-          <input
-            type="number"
-            value={otherAllowance}
-            placeholder="Enter other allowance (e.g., 1000)"
-            onChange={(e) => setOtherAllowance(+e.target.value)}
-            style={{ width: "100%", padding: "8px", marginBottom: "15px", borderRadius: "4px", border: "1px solid #ddd" }}
-          />
-        </fieldset>
-
-        <fieldset style={{ marginBottom: "20px", padding: "15px", borderRadius: "5px", border: "1px solid #ddd", backgroundColor: "#f9f9f9" }}>
-          <legend style={{ fontWeight: "bold", padding: "0 10px", color: "#000" }}>Salary Breakdown</legend>
-
-          <div style={{ margin: "10px 0", padding: "8px", backgroundColor: "white", borderRadius: "4px", color: "#000" }}>
-            <strong>Gross Salary: </strong>₹{gross.toFixed(2)}
+      <div className="two-column-layout">
+        <section className="page-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Salary Inputs</h2>
+              <p>Gross, PF, ESIC, net salary, and CTC are calculated automatically.</p>
+            </div>
           </div>
 
-          <h4 style={{ marginTop: "15px", marginBottom: "10px", color: "#000" }}>Provident Fund & Contributions:</h4>
-          <div style={{ margin: "8px 0", color: "#000" }}>Employee PF (12%): ₹{employeePF.toFixed(2)}</div>
-          <div style={{ margin: "8px 0", color: "#000" }}>Employer PF (12%): ₹{employerPF.toFixed(2)}</div>
-          <div style={{ margin: "8px 0", color: "#000" }}>EPS (8.33%): ₹{eps.toFixed(2)}</div>
-          <div style={{ margin: "8px 0", color: "#000" }}>Employer EPF (3.67%): ₹{employerEPF.toFixed(2)}</div>
+          <form className="form-grid" onSubmit={handleSubmit}>
+            <div className="field field-full">
+              <label htmlFor="employeeCode">Employee</label>
+              <select
+                id="employeeCode"
+                name="employeeCode"
+                value={formState.employeeCode}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select employee</option>
+                {employees.map((employee) => (
+                  <option
+                    key={employee.employeeCode}
+                    value={employee.employeeCode}
+                  >
+                    {employee.employeeName} ({employee.employeeCode})
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <h4 style={{ marginTop: "15px", marginBottom: "10px", color: "#000" }}>ESIC</h4>
-          <div style={{ margin: "8px 0", color: "#000" }}>
-            ESIC Applicable: <strong>{isESICApplicable ? "Yes" : "No"}</strong>
-          </div>
-          <div style={{ margin: "8px 0", color: "#000" }}>Employee ESIC: ₹{employeeESIC.toFixed(2)}</div>
-          <div style={{ margin: "8px 0", color: "#000" }}>Employer ESIC: ₹{employerESIC.toFixed(2)}</div>
+            <div className="field">
+              <label htmlFor="basic">Basic</label>
+              <input
+                id="basic"
+                name="basic"
+                type="number"
+                min="0"
+                value={formState.basic}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          <h4 style={{ marginTop: "15px", marginBottom: "10px", color: "#000" }}>Final Calculation</h4>
-          <div style={{ margin: "8px 0", padding: "10px", backgroundColor: "#e8f5e9", borderRadius: "4px" }}>
-            <strong style={{ color: "#28a745" }}>Net Salary (Take Home): ₹{netSalary.toFixed(2)}</strong>
-          </div>
-          <div style={{ margin: "8px 0", padding: "10px", backgroundColor: "#e3f2fd", borderRadius: "4px" }}>
-            <strong style={{ color: "#2196F3" }}>CTC (Cost to Company): ₹{ctc.toFixed(2)}</strong>
-          </div>
-        </fieldset>
+            <div className="field">
+              <label htmlFor="hra">HRA</label>
+              <input
+                id="hra"
+                name="hra"
+                type="number"
+                min="0"
+                value={formState.hra}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        <button
-          type="submit"
-          style={{
-            backgroundColor: "#4CAF50",
-            color: "white",
-            padding: "12px 24px",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            width: "100%",
-            fontSize: "16px",
-            fontWeight: "bold",
-          }}
-        >
-          Save Salary Master
-        </button>
-      </form>
-    </div>
+            <div className="field">
+              <label htmlFor="conveyance">Conveyance</label>
+              <input
+                id="conveyance"
+                name="conveyance"
+                type="number"
+                min="0"
+                value={formState.conveyance}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="otherAllowance">Other Allowance</label>
+              <input
+                id="otherAllowance"
+                name="otherAllowance"
+                type="number"
+                min="0"
+                value={formState.otherAllowance}
+                onChange={handleChange}
+              />
+            </div>
+
+            {error && <div className="alert alert-error">{error}</div>}
+            {successMessage && (
+              <div className="alert alert-success">{successMessage}</div>
+            )}
+
+            <div className="button-row">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={submitting}
+              >
+                {submitting ? "Saving..." : "Save Salary Master"}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <aside className="page-panel page-panel-accent">
+          <div className="panel-heading">
+            <div>
+              <h2>Live Preview</h2>
+              <p>
+                {selectedEmployee
+                  ? selectedEmployee.employeeName
+                  : "Select an employee to preview the record."}
+              </p>
+            </div>
+          </div>
+
+          <div className="metric-grid">
+            <div className="metric-card">
+              <span>Gross Salary</span>
+              <strong>{formatCurrency(preview.gross)}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Net Salary</span>
+              <strong>{formatCurrency(preview.netSalary)}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Employee PF</span>
+              <strong>{formatCurrency(preview.employeePF)}</strong>
+            </div>
+            <div className="metric-card">
+              <span>CTC</span>
+              <strong>{formatCurrency(preview.ctc)}</strong>
+            </div>
+          </div>
+
+          <ul className="bullet-list">
+            <li>Employee and employer PF are both 12 percent of basic salary.</li>
+            <li>ESIC is applied only when gross salary is 21000 or below.</li>
+            <li>The backend re-validates calculations before saving.</li>
+          </ul>
+        </aside>
+      </div>
+    </section>
   );
 }
 

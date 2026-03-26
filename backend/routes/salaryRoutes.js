@@ -7,14 +7,17 @@ import {
   updateSalary,
   deleteSalary
 } from "../controllers/salarycontroller.js";
+import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", createSalary);                    // Create salary
-router.get("/", getAllSalaries);                   // Get all salaries (paginated)
-router.get("/employee/:employeeCode", getSalaryByEmployeeCode); // Get salary by employee code
-router.get("/:id", getSalaryById);                 // Get salary by ID
-router.put("/:id", updateSalary);                  // Update salary
-router.delete("/:id", deleteSalary);               // Delete salary
+router.use(requireAuth);
+
+router.post("/", requireRole("admin", "super_admin"), createSalary);
+router.get("/", requireRole("admin", "super_admin"), getAllSalaries);
+router.get("/employee/:employeeCode", requireRole("admin", "super_admin"), getSalaryByEmployeeCode);
+router.get("/:id", requireRole("admin", "super_admin"), getSalaryById);
+router.put("/:id", requireRole("admin", "super_admin"), updateSalary);
+router.delete("/:id", requireRole("super_admin"), deleteSalary);
 
 export default router;

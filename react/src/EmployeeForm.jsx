@@ -1,153 +1,210 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./index.css";
+import api from "./lib/api";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? "https://tushar-form.onrender.com" : "http://localhost:5000");
+const initialFormState = {
+  employeeName: "",
+  employeeEmail: "",
+  employeeNumber: "",
+  dob: "",
+  joiningDate: "",
+};
+
+const isAdultAtJoining = (dob, joiningDate) => {
+  const dobDate = new Date(dob);
+  const joiningDateValue = new Date(joiningDate);
+
+  if (Number.isNaN(dobDate.getTime()) || Number.isNaN(joiningDateValue.getTime())) {
+    return false;
+  }
+
+  const minJoiningDate = new Date(dobDate);
+  minJoiningDate.setFullYear(minJoiningDate.getFullYear() + 18);
+
+  return joiningDateValue >= minJoiningDate;
+};
 
 function EmployeeForm() {
   const navigate = useNavigate();
-  const [apiErrorMessage, setApiErrorMessage] = useState("");
+  const [formState, setFormState] = useState(initialFormState);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [createdEmployee, setCreatedEmployee] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!API_BASE_URL || API_BASE_URL === "undefined") {
-      setApiErrorMessage(
-        "⚠️ Backend API URL is not configured. Please set VITE_API_BASE_URL environment variable."
-      );
-    }
-  }, []);
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
-  const generateEmployeeCode = () => {
-    return Math.floor(1000 + Math.random() * 9000);
+    setFormState((currentState) => ({
+      ...currentState,
+      [name]: value,
+    }));
   };
 
-  const [employeeCode, setEmployeeCode] = useState("");
-  const [dob, setdob] =  useState("");
-  const [joiningdate, setjoiningdate] = useState("");
-  const [error, setError] = useState("");
-  const [employees, setEmployees] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState("");
-
-  useEffect(() => {
-    setEmployeeCode(generateEmployeeCode());
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!API_BASE_URL || API_BASE_URL === "undefined") {
-      setError("Cannot submit: Backend API URL is not configured.");
-      return;
-    }
-
-    const dobDate = new Date(dob);
-    const minJoiningDate = new Date(dobDate);
-    minJoiningDate.setFullYear(minJoiningDate.getFullYear() + 18);
-
-    if (new Date(joiningdate) < minJoiningDate) {
-      setError("Employee must be at least 18 years old at the time of joining.");
-      return;
-    }
-
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
     setError("");
+    setSuccessMessage("");
 
-    const formData = {
-      employeeName: e.target.employeeName.value,
-      employeeEmail: e.target.employeeEmail.value,
-      employeeNumber: e.target.employeeNumber.value,
-      dob: dob,
-      joiningDate: joiningdate,
-    };
+    if (!isAdultAtJoining(formState.dob, formState.joiningDate)) {
+      setError("Employee must be at least 18 years old at the time of joining.");
+      setSubmitting(false);
+      return;
+    }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/employees`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to save employee");
-      }
-
-      alert("Employee saved successfully...");
-
-      e.target.reset();
-      setEmployeeCode(generateEmployeeCode());
-    } catch (err) {
-      setError(err.message);
+      const response = await api.post("/employees", formState);
+      setCreatedEmployee(response.data);
+      setFormState(initialFormState);
+      setSuccessMessage("Employee created successfully.");
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.message || "Failed to save employee"
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>Joining Form</h1>
-
-      {apiErrorMessage && (
-        <div style={{ 
-          backgroundColor: "#fff3cd", 
-          border: "1px solid #ffc107", 
-          color: "#856404", 
-          padding: "12px", 
-          marginBottom: "15px", 
-          borderRadius: "4px" 
-        }}>
-          {apiErrorMessage}
+    <section className="page-stack">
+      <div className="page-header">
+        <div>
+          <span className="eyebrow">Employee Onboarding</span>
+          <h1>Create Employee</h1>
+          <p>Add a new employee record and receive the server-generated employee code.</p>
         </div>
-      )}
+        <div className="button-row">
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => navigate("/employees")}
+          >
+            View Employee List
+          </button>
+        </div>
+      </div>
 
-      <fieldset>
-        <legend className='border'><strong>Personal Information</strong></legend>
+      <div className="two-column-layout">
+        <section className="page-panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Personal Details</h2>
+              <p>Use the employee's official contact details and joining date.</p>
+            </div>
+          </div>
 
-        <strong><label htmlFor="employeeName">Employee Name: </label></strong>
-        <input type="text" id="employeeName" name="employeeName" required />
-        <br />
+          <form className="form-grid" onSubmit={handleSubmit}>
+            <div className="field">
+              <label htmlFor="employeeName">Employee Name</label>
+              <input
+                id="employeeName"
+                name="employeeName"
+                type="text"
+                value={formState.employeeName}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        <strong><label htmlFor="employeeEmail">Employee Email: </label></strong>
-        <input type="email" pattern="[^@]+@gmail.com" id="employeeEmail" name="employeeEmail" required />
-        <br />
+            <div className="field">
+              <label htmlFor="employeeEmail">Employee Email</label>
+              <input
+                id="employeeEmail"
+                name="employeeEmail"
+                type="email"
+                value={formState.employeeEmail}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        <strong><label htmlFor="employeeNumber">Employee Number: </label></strong>
-        <input
-          type="tel"
-          id="employeeNumber"
-          name="employeeNumber"
-          inputMode="numeric"
-          pattern="[0-9]{10}"
-          maxLength="10"
-          required
-        />
-        <br />
+            <div className="field">
+              <label htmlFor="employeeNumber">Employee Number</label>
+              <input
+                id="employeeNumber"
+                name="employeeNumber"
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength="10"
+                value={formState.employeeNumber}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        <strong><label htmlFor="dob">Date of Birth: </label></strong>
-        <input type="date" id="dob" name="dob" required onChange={(e) => setdob(e.target.value)}/>
-        <br />
+            <div className="field">
+              <label htmlFor="dob">Date of Birth</label>
+              <input
+                id="dob"
+                name="dob"
+                type="date"
+                value={formState.dob}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        <strong><label htmlFor="joiningDate">Joining Date: </label></strong>
-        <input type="date" id="joiningDate" name="joiningDate" required onChange={(e) => setjoiningdate(e.target.value)}/>
-        <br />
+            <div className="field">
+              <label htmlFor="joiningDate">Joining Date</label>
+              <input
+                id="joiningDate"
+                name="joiningDate"
+                type="date"
+                value={formState.joiningDate}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-        <strong><label htmlFor="employeeCode">Employee Code: </label></strong>
-        <input
-          type="text"
-          id="employeeCode"
-          name="employeeCode"
-          value={employeeCode}
-          readOnly
-        />
-        <br />
+            {error && <div className="alert alert-error">{error}</div>}
+            {successMessage && (
+              <div className="alert alert-success">{successMessage}</div>
+            )}
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+            <div className="button-row">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={submitting}
+              >
+                {submitting ? "Saving..." : "Create Employee"}
+              </button>
+            </div>
+          </form>
+        </section>
 
-        <button type="submit" >Submit</button>
-        <button type="button" onClick={() => navigate('/list')} style={{ marginLeft: "10px" }}>View Employee List</button>
-      </fieldset>
-    </form>
+        <aside className="page-panel page-panel-accent">
+          <div className="panel-heading">
+            <div>
+              <h2>Generated Record</h2>
+              <p>The backend issues the actual employee code after save.</p>
+            </div>
+          </div>
+
+          {createdEmployee ? (
+            <div className="summary-card">
+              <span className="summary-label">Employee Code</span>
+              <strong>{createdEmployee.employeeCode}</strong>
+              <p>{createdEmployee.employeeName}</p>
+              <p>{createdEmployee.employeeEmail}</p>
+            </div>
+          ) : (
+            <div className="empty-state-card">
+              <p>No employee created in this session yet.</p>
+            </div>
+          )}
+
+          <ul className="bullet-list">
+            <li>Joining date must be at least 18 years after date of birth.</li>
+            <li>Email and phone values must be unique.</li>
+            <li>Delete access is reserved for super admins.</li>
+          </ul>
+        </aside>
+      </div>
+    </section>
   );
 }
 
