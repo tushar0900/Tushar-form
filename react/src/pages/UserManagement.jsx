@@ -166,6 +166,37 @@ function UserManagement() {
     }
   };
 
+  const handleDeleteUser = async (userId) => {
+    const targetUser = users.find((user) => user.id === userId);
+
+    if (!targetUser) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete ${targetUser.name} (${targetUser.email})? This cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setSubmitting(true);
+    setFeedback(null);
+
+    try {
+      await api.delete(`/users/${userId}`);
+      await loadUsers("User deleted successfully");
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: error.response?.data?.message || "Failed to delete user",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="screen-state">
@@ -371,14 +402,24 @@ function UserManagement() {
                     />
                   </td>
                   <td data-label="Actions">
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => handleUpdateUser(user.id)}
-                      disabled={submitting}
-                    >
-                      Save
-                    </button>
+                    <div className="table-actions">
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => handleUpdateUser(user.id)}
+                        disabled={submitting}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        onClick={() => handleDeleteUser(user.id)}
+                        disabled={submitting || user.id === currentUser?.id}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

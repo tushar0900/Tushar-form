@@ -22,6 +22,10 @@ class UserRepository {
     return User.findByIdAndUpdate(id, updateData, { new: true });
   }
 
+  async deleteById(id) {
+    return User.findByIdAndDelete(id);
+  }
+
   async countActiveByRole(role) {
     return User.countDocuments({ role, status: "active" });
   }

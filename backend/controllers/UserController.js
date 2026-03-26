@@ -31,3 +31,16 @@ export const updateUser = async (req, res) => {
     res.status(statusCode).json({ message: error.message });
   }
 };
+
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await UserService.deleteUser(req.params.id, req.user.id);
+    res.status(200).json({
+      message: "User deleted successfully",
+      user,
+    });
+  } catch (error) {
+    const statusCode = error.message === "User not found" ? 404 : 400;
+    res.status(statusCode).json({ message: error.message });
+  }
+};

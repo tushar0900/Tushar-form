@@ -109,6 +109,30 @@ class UserService {
     const updatedUser = await UserRepository.updateById(userId, updatePayload);
     return sanitizeUser(updatedUser);
   }
+
+  async deleteUser(userId, actorId) {
+    const user = await UserRepository.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (String(user._id) === actorId) {
+      throw new Error("You cannot delete your own account");
+    }
+
+    if (user.role === "super_admin" && user.status === "active") {
+      const activeSuperAdminCount = await UserRepository.countActiveByRole(
+        "super_admin"
+      );
+
+      if (activeSuperAdminCount <= 1) {
+        throw new Error("At least one active super admin must remain");
+      }
+    }
+
+    const deletedUser = await UserRepository.deleteById(userId);
+    return sanitizeUser(deletedUser);
+  }
 }
 
 export default new UserService();
