@@ -2,25 +2,25 @@
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #132238;
-  background: #ecf4f3;
-  --bg-canvas: #edf4f1;
-  --bg-shell: rgba(11, 25, 44, 0.88);
-  --bg-panel: rgba(255, 255, 255, 0.9);
+  color: #251635;
+  background: #f4effd;
+  --bg-canvas: #f4effd;
+  --bg-shell: rgba(34, 16, 64, 0.88);
+  --bg-panel: rgba(255, 255, 255, 0.92);
   --bg-panel-strong: #ffffff;
-  --border-soft: rgba(19, 34, 56, 0.12);
-  --border-strong: rgba(19, 34, 56, 0.18);
-  --text-main: #132238;
-  --text-muted: #5d6a7b;
-  --accent: #0f766e;
-  --accent-deep: #0b3c5d;
-  --accent-soft: #d6f4ec;
+  --border-soft: rgba(76, 29, 149, 0.14);
+  --border-strong: rgba(76, 29, 149, 0.2);
+  --text-main: #251635;
+  --text-muted: #6b5c84;
+  --accent: #8b5cf6;
+  --accent-deep: #5b21b6;
+  --accent-soft: #efe5ff;
   --danger: #b42318;
   --danger-soft: #fde8e8;
   --success: #117a65;
   --success-soft: #e2f7ef;
-  --shadow-soft: 0 16px 40px rgba(15, 23, 42, 0.12);
-  --shadow-strong: 0 24px 80px rgba(15, 23, 42, 0.18);
+  --shadow-soft: 0 16px 40px rgba(45, 18, 83, 0.12);
+  --shadow-strong: 0 24px 80px rgba(45, 18, 83, 0.18);
 }
 
 * {
@@ -38,9 +38,9 @@ body {
   min-height: 100vh;
   color: var(--text-main);
   background:
-    radial-gradient(circle at top left, rgba(255, 179, 102, 0.32), transparent 34%),
-    radial-gradient(circle at top right, rgba(15, 118, 110, 0.18), transparent 28%),
-    linear-gradient(180deg, #f4faf8 0%, #edf4f1 100%);
+    radial-gradient(circle at top left, rgba(196, 181, 253, 0.38), transparent 34%),
+    radial-gradient(circle at top right, rgba(139, 92, 246, 0.18), transparent 28%),
+    linear-gradient(180deg, #fbf8ff 0%, #f2eaff 100%);
 }
 
 body::before {
@@ -48,8 +48,8 @@ body::before {
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(15, 60, 93, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 60, 93, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(91, 33, 182, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(91, 33, 182, 0.05) 1px, transparent 1px);
   background-size: 36px 36px;
   pointer-events: none;
   z-index: -1;
@@ -86,8 +86,8 @@ select {
 input:focus,
 select:focus {
   outline: none;
-  border-color: rgba(15, 118, 110, 0.45);
-  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1);
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
 }
 
 p,
@@ -126,12 +126,18 @@ h3 {
 
 .auth-kicker,
 .eyebrow,
-.brand-kicker,
 .topbar-label {
   font-size: 0.76rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--text-muted);
+  color: rgba(91, 33, 182, 0.78);
+}
+
+.brand-kicker {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(233, 213, 255, 0.9);
 }
 
 .auth-intro h1,
@@ -153,7 +159,7 @@ h3 {
 
 .field label {
   font-size: 0.92rem;
-  color: var(--text-muted);
+  color: rgba(91, 33, 182, 0.78);
 }
 
 .field-full {
@@ -180,7 +186,7 @@ h3 {
   min-height: 100vh;
   padding: 1.5rem;
   background:
-    linear-gradient(180deg, rgba(8, 23, 43, 0.94), rgba(15, 60, 93, 0.96));
+    linear-gradient(180deg, rgba(31, 14, 61, 0.96), rgba(91, 33, 182, 0.98));
   color: #f5faf8;
   display: grid;
   gap: 1.5rem;
@@ -215,7 +221,7 @@ h3 {
 
 .nav-link:hover,
 .nav-link.is-active {
-  background: rgba(214, 244, 236, 0.12);
+  background: rgba(233, 213, 255, 0.14);
   color: #ffffff;
 }
 
@@ -235,7 +241,7 @@ h3 {
   justify-content: center;
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
-  background: rgba(214, 244, 236, 0.18);
+  background: rgba(233, 213, 255, 0.18);
   color: #f7fffd;
   width: fit-content;
   text-transform: capitalize;
@@ -256,9 +262,9 @@ h3 {
   align-items: center;
   gap: 1rem;
   padding: 1.2rem 1.5rem;
-  background: rgba(237, 244, 241, 0.84);
+  background: rgba(247, 242, 255, 0.86);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(19, 34, 56, 0.08);
+  border-bottom: 1px solid rgba(76, 29, 149, 0.08);
 }
 
 .topbar-left,
@@ -317,7 +323,7 @@ h3 {
 
 .page-panel-accent {
   background:
-    linear-gradient(180deg, rgba(214, 244, 236, 0.75), rgba(255, 248, 240, 0.88));
+    linear-gradient(180deg, rgba(233, 213, 255, 0.82), rgba(247, 242, 255, 0.94));
 }
 
 .panel-heading {
@@ -339,7 +345,7 @@ h3 {
   padding: 1rem;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(19, 34, 56, 0.08);
+  border: 1px solid rgba(76, 29, 149, 0.08);
 }
 
 .summary-card strong,
@@ -351,7 +357,7 @@ h3 {
 }
 
 .summary-label {
-  color: var(--text-muted);
+  color: rgba(91, 33, 182, 0.72);
   text-transform: uppercase;
   font-size: 0.78rem;
   letter-spacing: 0.08em;
@@ -392,18 +398,18 @@ h3 {
 .data-table td {
   background: rgba(255, 255, 255, 0.96);
   padding: 1rem;
-  border-top: 1px solid rgba(19, 34, 56, 0.08);
-  border-bottom: 1px solid rgba(19, 34, 56, 0.08);
+  border-top: 1px solid rgba(76, 29, 149, 0.08);
+  border-bottom: 1px solid rgba(76, 29, 149, 0.08);
   vertical-align: top;
 }
 
 .data-table td:first-child {
-  border-left: 1px solid rgba(19, 34, 56, 0.08);
+  border-left: 1px solid rgba(76, 29, 149, 0.08);
   border-radius: 18px 0 0 18px;
 }
 
 .data-table td:last-child {
-  border-right: 1px solid rgba(19, 34, 56, 0.08);
+  border-right: 1px solid rgba(76, 29, 149, 0.08);
   border-radius: 0 18px 18px 0;
 }
 
@@ -485,11 +491,11 @@ h3 {
 .btn-primary {
   background: linear-gradient(135deg, var(--accent), var(--accent-deep));
   color: #ffffff;
-  box-shadow: 0 14px 32px rgba(15, 118, 110, 0.22);
+  box-shadow: 0 14px 32px rgba(91, 33, 182, 0.24);
 }
 
 .btn-secondary {
-  background: rgba(15, 60, 93, 0.92);
+  background: rgba(76, 29, 149, 0.92);
   color: #ffffff;
 }
 
@@ -628,7 +634,7 @@ h3 {
   }
 
   .data-table td {
-    border: 1px solid rgba(19, 34, 56, 0.08);
+    border: 1px solid rgba(76, 29, 149, 0.08);
     border-bottom: none;
     border-radius: 0;
     padding: 0.95rem 1rem;
@@ -640,7 +646,7 @@ h3 {
   }
 
   .data-table td:last-child {
-    border-bottom: 1px solid rgba(19, 34, 56, 0.08);
+    border-bottom: 1px solid rgba(76, 29, 149, 0.08);
   }
 
   .data-table td::before {
