@@ -90,13 +90,6 @@ function LoginPage() {
             {submitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
-
-        <div className="auth-help">
-          <strong>First run default super admin</strong>
-          <p>Email: superadmin@hrms.local</p>
-          <p>Password: SuperAdmin@123</p>
-          <p>Set `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` to override.</p>
-        </div>
       </div>
     </div>
   );

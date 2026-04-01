@@ -114,8 +114,7 @@ h3 {
   backdrop-filter: blur(18px);
 }
 
-.auth-intro,
-.auth-help {
+.auth-intro {
   display: grid;
   gap: 0.55rem;
 }
@@ -164,13 +163,6 @@ h3 {
 
 .field-full {
   grid-column: 1 / -1;
-}
-
-.auth-help {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-soft);
-  color: var(--text-muted);
 }
 
 .app-shell {
