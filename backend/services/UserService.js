@@ -86,6 +86,16 @@ class UserService {
     return users.map(sanitizeUser);
   }
 
+  async getUserById(userId) {
+    const user = await UserRepository.findById(userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return sanitizeUser(user);
+  }
+
   async createUser(userData) {
     const {
       name,

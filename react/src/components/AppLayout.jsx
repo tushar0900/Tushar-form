@@ -17,6 +17,7 @@ function AppLayout() {
         ];
 
   if (user?.role === "super_admin") {
+    navigationItems.push({ to: "/audit-trail", label: "Audit Trail" });
     navigationItems.push({ to: "/users", label: "User Management" });
   }
 

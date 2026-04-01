@@ -9,6 +9,7 @@ import LoginPage from "./pages/LoginPage";
 import UserManagement from "./pages/UserManagement";
 import EmployeeSalaryPage from "./pages/EmployeeSalaryPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import AuditTrailPage from "./pages/AuditTrailPage";
 import { useAuth } from "./context/useAuth";
 import { getDefaultPathForUser } from "./lib/homePath";
 
@@ -43,6 +44,7 @@ function App() {
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={["super_admin"]} />}>
+              <Route path="/audit-trail" element={<AuditTrailPage />} />
               <Route path="/users" element={<UserManagement />} />
             </Route>
           </Route>

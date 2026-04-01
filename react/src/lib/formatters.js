@@ -2,6 +2,11 @@ const dateFormatter = new Intl.DateTimeFormat("en-IN", {
   dateStyle: "medium",
 });
 
+const dateTimeFormatter = new Intl.DateTimeFormat("en-IN", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
@@ -15,6 +20,15 @@ export const formatDate = (value) => {
 
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "-" : dateFormatter.format(date);
+};
+
+export const formatDateTime = (value) => {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "-" : dateTimeFormatter.format(date);
 };
 
 export const formatCurrency = (value) =>

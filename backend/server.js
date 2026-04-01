@@ -6,7 +6,9 @@ import authRoutes from "./routes/authRoutes.js";
 import salaryRoutes from "./routes/salaryRoutes.js";
 import employeeRoutes from "./routes/employeeRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import auditTrailRoutes from "./routes/auditTrailRoutes.js";
 import User from "./models/User.js";
+import AuditTrail from "./models/AuditTrail.js";
 import AuthService from "./services/AuthService.js";
 
 dotenv.config();
@@ -29,6 +31,7 @@ app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/employees", employeeRoutes);
 app.use("/salary-master", salaryRoutes);
+app.use("/audit-trail", auditTrailRoutes);
 
 // Basic health check endpoint
 app.get("/", (req, res) => {
@@ -41,6 +44,8 @@ const startServer = async () => {
     console.log("MongoDB connected");
     await User.syncIndexes();
     console.log("User indexes synced");
+    await AuditTrail.syncIndexes();
+    console.log("Audit trail indexes synced");
     await AuthService.bootstrapSuperAdmin();
 
     app.listen(PORT, () => {

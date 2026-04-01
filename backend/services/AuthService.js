@@ -1,6 +1,12 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import UserRepository from "../repositories/UserRepository.js";
+import AuditTrailService from "./AuditTrailService.js";
+import {
+  buildActorSnapshot,
+  buildAuditChanges,
+  buildUserSnapshot,
+} from "../utils/auditTrail.js";
 
 const DEFAULT_SUPER_ADMIN_EMAIL =
   process.env.SUPER_ADMIN_EMAIL || "superadmin@hrms.local";
@@ -147,7 +153,7 @@ class AuthService {
     const passwordHash = await bcrypt.hash(DEFAULT_SUPER_ADMIN_PASSWORD, 10);
     const username = await this.generateUniqueUsername(DEFAULT_SUPER_ADMIN_EMAIL);
 
-    await UserRepository.create({
+    const user = await UserRepository.create({
       username,
       name: "System Super Admin",
       email: DEFAULT_SUPER_ADMIN_EMAIL,
@@ -155,6 +161,17 @@ class AuthService {
       role: "super_admin",
       status: "active",
       mustChangePassword: true,
+    });
+
+    await AuditTrailService.recordEvent({
+      actor: buildActorSnapshot(null),
+      action: "bootstrap",
+      entityType: "user",
+      entityId: user._id.toString(),
+      entityLabel: user.email,
+      summary: "System bootstrapped the default super admin account",
+      changes: buildAuditChanges(null, buildUserSnapshot(user)),
+      metadata: {},
     });
 
     console.log("Bootstrap super admin created");

@@ -412,6 +412,7 @@ function UserManagement() {
             <li>New admin and super admin accounts must change password on first login.</li>
             <li>Employees can only sign in and view their own salary.</li>
             <li>Only super admins can create, disable, or promote users.</li>
+            <li>Audit trail records account, employee, salary, and auth events.</li>
             <li>At least one active super admin must always remain.</li>
           </ul>
         </aside>

@@ -1,8 +1,25 @@
 import SalaryService from "../services/SalaryService.js";
+import AuditTrailService from "../services/AuditTrailService.js";
+import {
+  buildActorSnapshot,
+  buildAuditChanges,
+  buildRequestMetadata,
+  buildSalarySnapshot,
+} from "../utils/auditTrail.js";
 
 export const createSalary = async (req, res) => {
   try {
     const salary = await SalaryService.createSalary(req.body);
+    await AuditTrailService.recordEvent({
+      actor: buildActorSnapshot(req.user),
+      action: "create",
+      entityType: "salary",
+      entityId: salary._id.toString(),
+      entityLabel: `Salary for employee #${salary.employeeCode}`,
+      summary: `${req.user.name} created salary master for employee #${salary.employeeCode}`,
+      changes: buildAuditChanges(null, buildSalarySnapshot(salary)),
+      metadata: buildRequestMetadata(req),
+    });
     res.status(201).json(salary);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -62,7 +79,21 @@ export const getMySalary = async (req, res) => {
 
 export const updateSalary = async (req, res) => {
   try {
+    const currentSalary = await SalaryService.getSalaryById(req.params.id);
     const salary = await SalaryService.updateSalary(req.params.id, req.body);
+    await AuditTrailService.recordEvent({
+      actor: buildActorSnapshot(req.user),
+      action: "update",
+      entityType: "salary",
+      entityId: salary._id.toString(),
+      entityLabel: `Salary for employee #${salary.employeeCode}`,
+      summary: `${req.user.name} updated salary master for employee #${salary.employeeCode}`,
+      changes: buildAuditChanges(
+        buildSalarySnapshot(currentSalary),
+        buildSalarySnapshot(salary)
+      ),
+      metadata: buildRequestMetadata(req),
+    });
     res.status(200).json(salary);
   } catch (error) {
     const statusCode = error.message === "Salary record not found" ? 404 : 400;
@@ -72,7 +103,21 @@ export const updateSalary = async (req, res) => {
 
 export const deleteSalary = async (req, res) => {
   try {
+    const currentSalary = await SalaryService.getSalaryById(req.params.id);
     const salary = await SalaryService.deleteSalary(req.params.id);
+    await AuditTrailService.recordEvent({
+      actor: buildActorSnapshot(req.user),
+      action: "delete",
+      entityType: "salary",
+      entityId: currentSalary._id.toString(),
+      entityLabel: `Salary for employee #${currentSalary.employeeCode}`,
+      summary: `${req.user.name} deleted salary master for employee #${currentSalary.employeeCode}`,
+      changes: buildAuditChanges(
+        buildSalarySnapshot(currentSalary),
+        null
+      ),
+      metadata: buildRequestMetadata(req),
+    });
     res.status(200).json({ message: "Salary record deleted successfully", salary });
   } catch (error) {
     const statusCode = error.message === "Salary record not found" ? 404 : 400;
