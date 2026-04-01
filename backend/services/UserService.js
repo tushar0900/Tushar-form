@@ -5,6 +5,7 @@ import { sanitizeUser } from "./AuthService.js";
 
 const VALID_ROLES = new Set(["admin", "super_admin", "employee"]);
 const VALID_STATUSES = new Set(["active", "inactive"]);
+const ROLES_REQUIRING_PASSWORD_CHANGE = new Set(["admin", "super_admin"]);
 
 const buildUsernameBase = (value = "") => {
   const base = value
@@ -16,6 +17,10 @@ const buildUsernameBase = (value = "") => {
 };
 
 class UserService {
+  roleRequiresPasswordChange(role) {
+    return ROLES_REQUIRING_PASSWORD_CHANGE.has(role);
+  }
+
   normalizeEmployeeCode(value) {
     if (value === undefined || value === null || value === "") {
       return null;
@@ -132,6 +137,7 @@ class UserService {
       role,
       employeeCode: normalizedEmployeeCode,
       status,
+      mustChangePassword: this.roleRequiresPasswordChange(role),
     });
 
     return sanitizeUser(user);
@@ -206,6 +212,10 @@ class UserService {
 
     if (updates.role) {
       updatePayload.role = updates.role;
+
+      if (!this.roleRequiresPasswordChange(updates.role) && !updates.password) {
+        updatePayload.mustChangePassword = false;
+      }
     }
 
     if (nextRole !== "employee" && user.employeeCode !== null) {
@@ -225,6 +235,10 @@ class UserService {
 
     if (updates.password) {
       updatePayload.passwordHash = await bcrypt.hash(updates.password, 10);
+      updatePayload.mustChangePassword =
+        String(user._id) === String(actorId)
+          ? false
+          : this.roleRequiresPasswordChange(nextRole);
     }
 
     const updatedUser = await UserRepository.updateById(userId, updatePayload);

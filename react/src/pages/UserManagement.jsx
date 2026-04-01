@@ -409,6 +409,7 @@ function UserManagement() {
 
           <ul className="bullet-list">
             <li>Admins can manage employees and salaries.</li>
+            <li>New admin and super admin accounts must change password on first login.</li>
             <li>Employees can only sign in and view their own salary.</li>
             <li>Only super admins can create, disable, or promote users.</li>
             <li>At least one active super admin must always remain.</li>
@@ -492,7 +493,12 @@ function UserManagement() {
                       <option value="inactive">Inactive</option>
                     </select>
                   </td>
-                  <td data-label="Last Login">{formatDate(user.lastLoginAt)}</td>
+                  <td data-label="Last Login">
+                    <span>{formatDate(user.lastLoginAt)}</span>
+                    {user.mustChangePassword ? (
+                      <span className="table-meta">Password change required</span>
+                    ) : null}
+                  </td>
                   <td data-label="Reset Password">
                     <input
                       type="password"

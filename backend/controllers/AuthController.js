@@ -12,3 +12,20 @@ export const login = async (req, res) => {
 export const getCurrentUser = async (req, res) => {
   res.status(200).json({ user: req.user });
 };
+
+export const changePassword = async (req, res) => {
+  try {
+    const user = await AuthService.changePassword(
+      req.user.id,
+      req.body.currentPassword,
+      req.body.newPassword
+    );
+
+    res.status(200).json({
+      message: "Password changed successfully",
+      user,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};

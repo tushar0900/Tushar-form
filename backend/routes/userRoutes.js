@@ -5,11 +5,15 @@ import {
   getAllUsers,
   updateUser,
 } from "../controllers/UserController.js";
-import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
+import {
+  requireAuth,
+  requireCompletedPasswordChange,
+  requireRole,
+} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.use(requireAuth, requireRole("super_admin"));
+router.use(requireAuth, requireCompletedPasswordChange, requireRole("super_admin"));
 router.get("/", getAllUsers);
 router.post("/", createUser);
 router.patch("/:id", updateUser);

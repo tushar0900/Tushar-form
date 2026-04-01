@@ -25,6 +25,7 @@ export const sanitizeUser = (user) => ({
   role: user.role,
   employeeCode: user.employeeCode ?? null,
   status: user.status,
+  mustChangePassword: Boolean(user.mustChangePassword),
   lastLoginAt: user.lastLoginAt,
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
@@ -97,6 +98,33 @@ class AuthService {
     };
   }
 
+  async changePassword(userId, currentPassword, newPassword) {
+    if (!currentPassword || !newPassword) {
+      throw new Error("Current password and new password are required");
+    }
+
+    const user = await UserRepository.findById(userId);
+    if (!user || user.status !== "active") {
+      throw new Error("User not found or inactive");
+    }
+
+    const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isValidPassword) {
+      throw new Error("Current password is incorrect");
+    }
+
+    const isSamePassword = await bcrypt.compare(newPassword, user.passwordHash);
+    if (isSamePassword) {
+      throw new Error("New password must be different from the current password");
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    user.mustChangePassword = false;
+    await user.save();
+
+    return sanitizeUser(user);
+  }
+
   async getCurrentUser(userId) {
     const user = await UserRepository.findById(userId);
     if (!user || user.status !== "active") {
@@ -126,6 +154,7 @@ class AuthService {
       passwordHash,
       role: "super_admin",
       status: "active",
+      mustChangePassword: true,
     });
 
     console.log("Bootstrap super admin created");

@@ -8,11 +8,15 @@ import {
   updateSalary,
   deleteSalary
 } from "../controllers/salarycontroller.js";
-import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
+import {
+  requireAuth,
+  requireCompletedPasswordChange,
+  requireRole,
+} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.use(requireAuth);
+router.use(requireAuth, requireCompletedPasswordChange);
 
 router.post("/", requireRole("admin", "super_admin"), createSalary);
 router.get("/", requireRole("admin", "super_admin"), getAllSalaries);

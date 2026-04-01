@@ -8,8 +8,9 @@ import AppLayout from "./components/AppLayout";
 import LoginPage from "./pages/LoginPage";
 import UserManagement from "./pages/UserManagement";
 import EmployeeSalaryPage from "./pages/EmployeeSalaryPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 import { useAuth } from "./context/useAuth";
-import { getHomePathForRole } from "./lib/homePath";
+import { getDefaultPathForUser } from "./lib/homePath";
 
 function App() {
   const { isAuthenticated, user } = useAuth();
@@ -19,11 +20,15 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
 
+        <Route element={<ProtectedRoute allowPendingPasswordChange />}>
+          <Route path="/change-password" element={<ChangePasswordPage />} />
+        </Route>
+
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route
               index
-              element={<Navigate to={getHomePathForRole(user?.role)} replace />}
+              element={<Navigate to={getDefaultPathForUser(user)} replace />}
             />
 
             <Route element={<ProtectedRoute allowedRoles={["admin", "super_admin"]} />}>
@@ -47,7 +52,7 @@ function App() {
           path="*"
           element={
             <Navigate
-              to={isAuthenticated ? getHomePathForRole(user?.role) : "/login"}
+              to={isAuthenticated ? getDefaultPathForUser(user) : "/login"}
               replace
             />
           }

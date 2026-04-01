@@ -43,6 +43,16 @@ export function AuthProvider({ children }) {
     return response.data.user;
   };
 
+  const changePassword = async (currentPassword, newPassword) => {
+    const response = await api.post("/auth/change-password", {
+      currentPassword,
+      newPassword,
+    });
+
+    setUser(response.data.user);
+    return response.data.user;
+  };
+
   const logout = () => {
     clearStoredToken();
     setUser(null);
@@ -55,6 +65,7 @@ export function AuthProvider({ children }) {
         isAuthenticated: Boolean(user),
         isBootstrapping,
         login,
+        changePassword,
         logout,
         refreshUser,
       }}

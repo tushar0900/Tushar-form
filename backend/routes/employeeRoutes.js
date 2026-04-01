@@ -8,11 +8,15 @@ import {
   deleteEmployee,
   checkEmployeeCodeExists,
 } from "../controllers/EmployeeController.js";
-import { requireAuth, requireRole } from "../middleware/authMiddleware.js";
+import {
+  requireAuth,
+  requireCompletedPasswordChange,
+  requireRole,
+} from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.use(requireAuth);
+router.use(requireAuth, requireCompletedPasswordChange);
 
 router.get("/", requireRole("admin", "super_admin"), getAllEmployees);
 router.post("/", requireRole("admin", "super_admin"), createEmployee);

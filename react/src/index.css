@@ -114,13 +114,21 @@ h3 {
   backdrop-filter: blur(18px);
 }
 
-.auth-intro {
+.auth-intro,
+.auth-help {
   display: grid;
   gap: 0.55rem;
 }
 
 .auth-intro {
   margin-bottom: 1.5rem;
+}
+
+.auth-help {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-soft);
+  color: var(--text-muted);
 }
 
 .auth-kicker,

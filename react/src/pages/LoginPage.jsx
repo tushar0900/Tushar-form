@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { getHomePathForRole } from "../lib/homePath";
+import { getDefaultPathForUser, getHomePathForRole } from "../lib/homePath";
 
 function LoginPage() {
   const { isAuthenticated, login, user } = useAuth();
@@ -15,7 +15,7 @@ function LoginPage() {
   const [error, setError] = useState("");
 
   if (isAuthenticated) {
-    return <Navigate to={getHomePathForRole(user?.role)} replace />;
+    return <Navigate to={getDefaultPathForUser(user)} replace />;
   }
 
   const handleChange = (event) => {
@@ -35,7 +35,10 @@ function LoginPage() {
       const user = await login(credentials.email, credentials.password);
       const nextPath = location.state?.from?.pathname || getHomePathForRole(user.role);
 
-      navigate(nextPath, { replace: true });
+      navigate(user.mustChangePassword ? getDefaultPathForUser(user) : nextPath, {
+        replace: true,
+        state: user.mustChangePassword ? { from: location.state?.from } : undefined,
+      });
     } catch (requestError) {
       setError(
         requestError.response?.data?.message || "Unable to sign in right now"
@@ -90,6 +93,13 @@ function LoginPage() {
             {submitting ? "Signing in..." : "Sign In"}
           </button>
         </form>
+
+        <div className="auth-help">
+          <strong>First run default super admin</strong>
+          <p>Email: superadmin@hrms.local</p>
+          <p>Password: SuperAdmin@123</p>
+          <p>Set `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` to override.</p>
+        </div>
       </div>
     </div>
   );

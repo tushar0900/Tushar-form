@@ -9,3 +9,11 @@ export const getHomePathForRole = (role) => {
 
   return "/employees";
 };
+
+export const getDefaultPathForUser = (user) => {
+  if (user?.mustChangePassword) {
+    return "/change-password";
+  }
+
+  return getHomePathForRole(user?.role);
+};
