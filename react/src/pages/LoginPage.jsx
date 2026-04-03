@@ -53,7 +53,7 @@ function LoginPage() {
       <div className="auth-card">
         <div className="auth-intro">
           <span className="auth-kicker">Secure Access</span>
-          <h1>HRMS Login</h1>
+          <h1>Employee Payroll System Login</h1>
           <p>
             Admins manage employees and salaries. Employee accounts can only view
             their own salary record.
@@ -96,7 +96,7 @@ function LoginPage() {
 
         <div className="auth-help">
           <strong>First run default super admin</strong>
-          <p>Email: superadmin@hrms.local</p>
+          <p>Email: superadmin@payroll.local</p>
           <p>Password: SuperAdmin@123</p>
           <p>Set `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` to override.</p>
         </div>

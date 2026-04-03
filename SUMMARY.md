@@ -348,7 +348,7 @@ dispatch(clearSuccess())
 
 ## 🎉 Congratulations!
 
-Your HRMS system now has:
+Your Employee Payroll System now has:
 - ✅ Professional 3-layer backend architecture
 - ✅ Redux state management on frontend
 - ✅ Clean separation of concerns
@@ -361,5 +361,5 @@ Your HRMS system now has:
 ---
 
 *Last Updated: January 23, 2026*
-*Project: HRMS System with ORM*
+*Project: Employee Payroll System with ORM*
 *Status: ORM Implementation Complete ✓*

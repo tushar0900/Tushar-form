@@ -9,7 +9,7 @@ import {
 } from "../utils/auditTrail.js";
 
 const DEFAULT_SUPER_ADMIN_EMAIL =
-  process.env.SUPER_ADMIN_EMAIL || "superadmin@hrms.local";
+  process.env.SUPER_ADMIN_EMAIL || "superadmin@payroll.local";
 const DEFAULT_SUPER_ADMIN_PASSWORD =
   process.env.SUPER_ADMIN_PASSWORD || "SuperAdmin@123";
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-secret-change-me";

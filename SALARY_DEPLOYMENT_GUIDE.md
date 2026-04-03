@@ -371,4 +371,4 @@ DELETE /salary-master/:id                     → Delete salary
 
 ---
 
-**Your HRMS Salary Management System is Now Ready! 🚀**
+**Your Employee Payroll System is Now Ready! 🚀**

@@ -30,7 +30,7 @@ function AppLayout() {
 
       <aside className={`app-sidebar ${menuOpen ? "is-open" : ""}`}>
         <div className="brand-block">
-          <span className="brand-kicker">HRMS</span>
+          <span className="brand-kicker">Employee Payroll System</span>
           <h1>Control Center</h1>
           <p>
             {user?.role === "employee"

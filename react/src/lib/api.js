@@ -6,7 +6,7 @@ export const API_BASE_URL =
     ? "https://tushar-form.onrender.com"
     : "http://localhost:5000");
 
-export const TOKEN_STORAGE_KEY = "hrms_auth_token";
+export const TOKEN_STORAGE_KEY = "employee_payroll_system_auth_token";
 
 export const getStoredToken = () => window.localStorage.getItem(TOKEN_STORAGE_KEY);
 

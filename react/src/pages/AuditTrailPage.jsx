@@ -132,7 +132,7 @@ function AuditTrailPage() {
         <div>
           <span className="eyebrow">Super Admin</span>
           <h1>Audit Trail</h1>
-          <p>Review security and data-change events across the HRMS workspace.</p>
+          <p>Review security and data-change events across the Employee Payroll System workspace.</p>
         </div>
       </div>
 

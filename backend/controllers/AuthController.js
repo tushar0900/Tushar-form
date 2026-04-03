@@ -16,7 +16,7 @@ export const login = async (req, res) => {
       entityType: "auth",
       entityId: result.user.id,
       entityLabel: result.user.email,
-      summary: `${result.user.name} signed in to HRMS`,
+      summary: `${result.user.name} signed in to Employee Payroll System`,
       changes: [],
       metadata: buildRequestMetadata(req),
     });

@@ -423,7 +423,7 @@ import SalaryMaster from "./SalaryMaster";
 function App() {
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <h1>📊 HRMS System</h1>
+      <h1>📊 Employee Payroll System</h1>
 
       <nav style={{ marginBottom: "20px" }}>
         <Link to="/" style={{ marginRight: "20px" }}>

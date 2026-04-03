@@ -71,7 +71,7 @@ function ChangePasswordPage() {
           <h1>Change Password</h1>
           <p>
             New admin and super admin accounts must change their password before
-            entering HRMS.
+            entering Employee Payroll System.
           </p>
         </div>
 
@@ -125,7 +125,7 @@ function ChangePasswordPage() {
         <div className="auth-help">
           <strong>Before you continue</strong>
           <p>Use the temporary password you signed in with as the current password.</p>
-          <p>After the update, we will send you straight into the HRMS workspace.</p>
+          <p>After the update, we will send you straight into the Employee Payroll System workspace.</p>
         </div>
       </div>
     </div>
