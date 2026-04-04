@@ -2,20 +2,14 @@ import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import User from "../models/User.js";
+import { resolveMongoUri } from "../config/runtime.js";
 
 dotenv.config();
 
-const DEFAULT_MONGO_URI = "mongodb://127.0.0.1:27017/employeeDB";
 const DEFAULT_SUPER_ADMIN_EMAIL =
   process.env.SUPER_ADMIN_EMAIL || "superadmin@payroll.local";
 const DEFAULT_SUPER_ADMIN_PASSWORD =
   process.env.SUPER_ADMIN_PASSWORD || "SuperAdmin@123";
-
-const resolveMongoUri = () =>
-  process.env.MONGO_URI &&
-  !process.env.MONGO_URI.includes("your_mongodb_connection_string")
-    ? process.env.MONGO_URI
-    : DEFAULT_MONGO_URI;
 
 const parseArgs = (argv) => {
   const options = {
@@ -102,11 +96,19 @@ const resetSuperAdminPassword = async ({ email, password }) => {
 
 const main = async () => {
   const options = parseArgs(process.argv.slice(2));
-  const mongoUri = resolveMongoUri();
+  const { mongoUri, usingLocalFallback } = resolveMongoUri();
 
   try {
     await mongoose.connect(mongoUri);
-    console.log(`Connected to MongoDB: ${mongoUri}`);
+    console.log(
+      `Connected to MongoDB: ${mongoose.connection.host}/${mongoose.connection.name}`
+    );
+
+    if (usingLocalFallback) {
+      console.warn(
+        "Using the local MongoDB fallback because MONGO_URI is missing or still set to the placeholder."
+      );
+    }
 
     if (options.listOnly) {
       await listSuperAdmins();

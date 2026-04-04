@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "list:users": "node scripts/listAuthUsers.js",
+    "reset:auth-system": "node scripts/resetAuthSystem.js",
     "reset:super-admin": "node scripts/resetSuperAdminPassword.js"
   },
   "keywords": [],

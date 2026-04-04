@@ -10,6 +10,7 @@ import auditTrailRoutes from "./routes/auditTrailRoutes.js";
 import User from "./models/User.js";
 import AuditTrail from "./models/AuditTrail.js";
 import AuthService from "./services/AuthService.js";
+import { resolveMongoUri } from "./config/runtime.js";
 
 dotenv.config();
 
@@ -19,12 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
-const DEFAULT_MONGO_URI = "mongodb://127.0.0.1:27017/employeeDB";
-const MONGO_URI =
-  process.env.MONGO_URI &&
-  !process.env.MONGO_URI.includes("your_mongodb_connection_string")
-    ? process.env.MONGO_URI
-    : DEFAULT_MONGO_URI;
+const { mongoUri: MONGO_URI, usingLocalFallback } = resolveMongoUri();
 
 // Routes
 app.use("/auth", authRoutes);
@@ -41,7 +37,16 @@ app.get("/", (req, res) => {
 const startServer = async () => {
   try {
     await mongoose.connect(MONGO_URI);
-    console.log("MongoDB connected");
+    console.log(
+      `MongoDB connected (${mongoose.connection.host}/${mongoose.connection.name})`
+    );
+
+    if (usingLocalFallback) {
+      console.warn(
+        "Using the local MongoDB fallback because MONGO_URI is missing or still set to the placeholder."
+      );
+    }
+
     await User.syncIndexes();
     console.log("User indexes synced");
     await AuditTrail.syncIndexes();

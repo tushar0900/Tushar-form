@@ -7,6 +7,7 @@ function LoginPage() {
   const { isAuthenticated, login, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isProduction = import.meta.env.PROD;
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
@@ -95,10 +96,25 @@ function LoginPage() {
         </form>
 
         <div className="auth-help">
-          <strong>First run default super admin</strong>
-          <p>Email: superadmin@payroll.local</p>
-          <p>Password: SuperAdmin@123</p>
-          <p>Set `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` to override.</p>
+          {isProduction ? (
+            <>
+              <strong>Server sign-in</strong>
+              <p>This deployment uses the accounts stored in the server database.</p>
+              <p>
+                Users created on localhost will not work here unless both
+                environments share the same `MONGO_URI`.
+              </p>
+            </>
+          ) : (
+            <>
+              <strong>Local first run</strong>
+              <p>A brand-new local database bootstraps one super admin account.</p>
+              <p>
+                The bootstrap email and password come from `SUPER_ADMIN_EMAIL`
+                and `SUPER_ADMIN_PASSWORD`.
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
